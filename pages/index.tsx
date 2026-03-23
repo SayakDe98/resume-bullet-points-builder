@@ -1,78 +1,166 @@
-import Image from "next/image";
-import { Geist, Geist_Mono } from "next/font/google";
+"use client";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import { useState } from "react";
+import natural from "natural";
 
 export default function Home() {
+  const [bullets, setBullets] = useState<string[]>([]);
+
+  const handleFiles = async (files: FileList | null) => {
+    if (!files) return;
+
+    let extracted: string[] = [];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (!file.name.endsWith(".txt")) continue;
+
+      const text = await file.text();
+      const points = extractBulletPoints(text);
+      extracted.push(...points);
+    }
+
+    const deduped = deduplicate(extracted);
+    const ranked = rankBullets(deduped);
+
+    setBullets(ranked);
+  };
+
   return (
-    <div
-      className={`${geistSans.className} ${geistMono.className} flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black`}
-    >
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the index.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs/pages/getting-started?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <main className="p-10">
+      <h1 className="text-2xl font-bold mb-4">AI Resume Builder</h1>
+
+      <input
+        type="file"
+        multiple
+        onChange={(e) => handleFiles(e.target.files)}
+        className="mb-6"
+      />
+
+      <h2 className="text-xl font-semibold mt-4 mb-2">Top Resume Bullets</h2>
+
+      <div className="space-y-2">
+        {bullets.map((b, i) => (
+          <div key={i} className="p-2 border rounded">
+            • {b}
+          </div>
+        ))}
+      </div>
+    </main>
   );
+}
+
+const tokenizer = new natural.WordTokenizer();
+const stemmer = natural.PorterStemmer;
+
+const ACTION_VERBS = [
+  "build",
+  "develop",
+  "implement",
+  "design",
+  "optimize",
+  "reduce",
+  "improve",
+  "increase",
+  "lead",
+  "create",
+  "fix",
+];
+
+const TECH_KEYWORDS = [
+  "api",
+  "redis",
+  "sql",
+  "docker",
+  "kubernetes",
+  "react",
+  "next",
+  "node",
+  "backend",
+  "frontend",
+  "system",
+  "service",
+];
+
+const STEMMED_VERBS = ACTION_VERBS.map((v) => stemmer.stem(v));
+
+function extractBulletPoints(text: string): string[] {
+  const sentences = text.split(/\n|\.|!/);
+  const bullets: string[] = [];
+
+  for (const sentence of sentences) {
+    const clean = sentence.trim();
+    if (clean.length < 20) continue;
+
+    const tokens = tokenizer.tokenize(clean.toLowerCase());
+    const stems = tokens.map((t) => stemmer.stem(t));
+
+    const hasVerb = stems.some((s) => STEMMED_VERBS.includes(s));
+    const hasTech = tokens.some((t) => TECH_KEYWORDS.includes(t));
+
+    if (hasVerb && hasTech) {
+      bullets.push(capitalize(clean));
+    }
+  }
+
+  return bullets;
+}
+
+function deduplicate(lines: string[]): string[] {
+  const unique: string[] = [];
+
+  for (const line of lines) {
+    let isDuplicate = false;
+
+    for (const existing of unique) {
+      const similarity = natural.JaroWinklerDistance(
+        line.toLowerCase(),
+        existing.toLowerCase()
+      );
+
+      if (similarity > 0.88) {
+        isDuplicate = true;
+        break;
+      }
+    }
+
+    if (!isDuplicate) unique.push(line);
+  }
+
+  return unique;
+}
+
+function rankBullets(lines: string[]): string[] {
+  return lines
+    .map((line) => ({ line, score: scoreLine(line) }))
+    .sort((a, b) => b.score - a.score)
+    .map((item) => item.line);
+}
+
+function scoreLine(line: string): number {
+  let score = 0;
+
+  const lower = line.toLowerCase();
+
+  // action verbs boost
+  ACTION_VERBS.forEach((verb) => {
+    if (lower.includes(verb)) score += 2;
+  });
+
+  // tech keywords boost
+  TECH_KEYWORDS.forEach((tech) => {
+    if (lower.includes(tech)) score += 2;
+  });
+
+  // numbers = impact
+  if (/\d/.test(line)) score += 3;
+
+  // length sweet spot
+  if (line.length > 50 && line.length < 120) score += 2;
+
+  return score;
+}
+
+function capitalize(str: string) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
 }
