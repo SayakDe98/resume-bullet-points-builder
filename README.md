@@ -1,40 +1,155 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# Resume Bullet Points Builder
 
-## Getting Started
+A Next.js + TypeScript application that converts your **daily work logs** (stored as `.txt` files in nested folders) into **high-quality resume bullet points** using NLP.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## 🚀 Features
+
+* 📁 Upload entire folders (including nested structure)
+* 🧠 NLP-powered extraction using `natural`
+* ✂️ Filters out weak/non-technical lines
+* 🔁 Deduplicates similar bullets
+* 📊 Ranks bullets based on impact
+* 🎨 Clean modern UI
+
+---
+
+## 🏗️ Tech Stack
+
+* **Frontend:** Next.js (Pages Router), TypeScript
+* **Backend:** Next.js API Routes
+* **NLP:** `natural` (tokenization, stemming, similarity)
+* **Styling:** Tailwind CSS
+
+---
+
+## 📂 Project Structure
+
+```
+resume-bullet-points-builder/
+├── pages/
+│   ├── index.tsx         # UI (file upload + display)
+│   ├── api/
+│   │   └── process.ts    # NLP processing (server-side)
+├── styles/
+│   └── globals.css
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+## ⚙️ Installation
 
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+```bash
+pnpm install
+```
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
+Install NLP dependency:
 
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+ppnpm add natural
+```
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## ▶️ Running the App
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
+```bash
+pnpm dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Open:
 
-## Deploy on Vercel
+```
+http://localhost:3000
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+## 🧠 How It Works
+
+### 1. Upload Folder
+
+* Uses browser `webkitdirectory` to read all `.txt` files
+
+### 2. Send to Backend
+
+* Files are sent to `/api/process`
+
+### 3. NLP Pipeline
+
+```
+Text → Tokenize → Stem → Filter → Deduplicate → Rank
+```
+
+### 4. Output
+
+* Clean, ranked resume bullet points
+
+---
+
+## 📌 Example
+
+### Input (daily logs)
+
+```
+worked on backend
+Implemented Redis caching
+Fixed login bug
+Optimized SQL query reducing latency by 40%
+```
+
+### Output
+
+```
+• Implemented Redis caching
+• Optimized SQL query reducing latency by 40%
+```
+
+---
+
+## ⚠️ Limitations
+
+* Does not rewrite weak sentences (yet)
+* Depends on quality of input logs
+* No project grouping (future enhancement)
+
+---
+
+## 🔥 Future Improvements
+
+* ✨ LLM-based rewriting (GPT)
+* 🗂️ Project grouping
+* 📄 Export to PDF / Markdown
+* ✅ Bullet selection UI
+* 🏷️ Tagging (Frontend / Backend / DevOps)
+
+---
+
+## 💡 Best Practices for Input Logs
+
+Write logs like this:
+
+```
+Implemented REST API for order processing
+Optimized Redis caching reducing latency by 30%
+```
+
+Avoid:
+
+```
+worked on stuff
+continued task
+```
+
+---
+
+## 📜 License
+
+MIT
+
+---
+
+## 👨‍💻 Author
+
+Built to turn daily engineering logs into resume-ready content efficiently.
