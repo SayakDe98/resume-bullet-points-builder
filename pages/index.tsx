@@ -12,7 +12,7 @@ const handleFiles = async (files: FileList | null) => {
 
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
-    if (!file.name.endsWith(".txt")) continue;
+    // if (!file.name.endsWith(".txt")) continue;
 
     texts.push(await file.text());
   }
@@ -26,6 +26,7 @@ const handleFiles = async (files: FileList | null) => {
   });
 
   const data = await res.json();
+  
   setBullets(data.bullets);
 };
 
@@ -36,6 +37,7 @@ const handleFiles = async (files: FileList | null) => {
       <input
         type="file"
         multiple
+          {...{ webkitdirectory: "true" }}
         onChange={(e) => handleFiles(e.target.files)}
         className="mb-6"
       />
