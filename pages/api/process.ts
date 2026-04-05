@@ -11,6 +11,7 @@ const ACTION_VERBS = [
   "design",
   "optimize",
   "fix",
+  "generate"
 ];
 
 const STEMMED = ACTION_VERBS.map((v) => stemmer.stem(v));
